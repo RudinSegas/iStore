@@ -5,5 +5,6 @@ return [
     'db_name' => getenv('DB_NAME') ?: 'istore',
     'db_user' => getenv('DB_USER') ?: 'istore',
     'db_password' => getenv('DB_PASSWORD') ?: '',
+    'app_secret' => getenv('APP_SECRET') ?: '', // generate with scripts/setup.php
     'secure_cookies' => getenv('SESSION_SECURE_COOKIE') === '1',
 ];

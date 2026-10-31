@@ -3,7 +3,7 @@
 Usage: python3 tests/smoke.py http://127.0.0.1:8080
 Tests deliberately create users, orders and contact records and decrement stock.
 """
-import html, re, sys, time, urllib.request, urllib.parse, urllib.error, http.cookiejar
+import html, re, secrets, sys, time, urllib.request, urllib.parse, urllib.error, http.cookiejar
 base = (sys.argv[1] if len(sys.argv)>1 else 'http://127.0.0.1:8080').rstrip('/')
 client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 checks = 0
@@ -41,7 +41,7 @@ _,body=post('update',{'product_id':1,'quantity':2}); check('₪5,998.00' in body
 _,body=post('update',{'product_id':1,'quantity':-1}); check('בין 0 ל־20' in body,'negative quantity rejected')
 _,body=post('add',{'product_id':1,'quantity':20}); check('אין מספיק מלאי' in body,'stock limit enforced')
 _,body=post('checkout',{'address':'Demo street 10'});check('טוב לראות אותך שוב' in body,'anonymous checkout requires login')
-email=f'smoke-{time.time_ns()}@example.test'; password='DemoPass123!'
+email=f'smoke-{time.time_ns()}@example.test'; password=secrets.token_urlsafe(24)
 _,body=post('register',{'name':'Smoke Tester','email':email,'password':password},'/?page=register');check('התנתקות' in body,'register and auto-login')
 cart=get('/?page=cart'); token=re.search(r'name="checkout_token" value="([a-f0-9]+)"',cart).group(1)
 _,body=post('checkout',{'address':'Demo street 10','checkout_token':token,'total_cents':1});check('הזמנת ההדגמה נשמרה בהצלחה' in body and '₪5,998.00' in body,'checkout saves authoritative total')
@@ -54,7 +54,7 @@ check('Demo street 10' in get('/?page=orders'),'orders persist across login')
 _,body=post('register',{'name':'Duplicate','email':email,'password':password},'/?page=register');check('כבר רשומה' in body,'duplicate email rejected')
 _,body=post('add',{'product_id':2,'quantity':1});check('Lenovo ThinkPad E14' in body,'add another product')
 _,body=post('update',{'product_id':2,'quantity':0});check('הסל עדיין ריק' in body,'remove cart item')
-_,body=post('contact',{'name':'Demo','email':'contact@example.test','phone':'050-1234567'});check('הפרטים נשמרו בהצלחה' in body,'contact form persists')
+_,body=post('contact',{'name':'Demo','email':'contact@example.test','phone':'050-8800770'});check('הפרטים נשמרו בהצלחה' in body,'contact form persists')
 check('&lt;script&gt;' in get('/?page=catalog&q='+urllib.parse.quote('<script>')),'search output is escaped')
 other=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 with other.open(base+'/?page=orders') as r: check('טוב לראות אותך שוב' in r.read().decode(),'order history authentication')

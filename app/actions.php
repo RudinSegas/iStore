@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
-if (!hash_equals($_SESSION['csrf'], (string)($_POST['csrf'] ?? ''))) { http_response_code(403); exit('Invalid CSRF token'); }
+foreach (['csrf','action','email','password','name','product_id','quantity','checkout_token','address','phone'] as $key) {
+    if (array_key_exists($key, $_POST)) $_POST[$key] = scalarInput($_POST, $key);
+}
+if (!hash_equals($_SESSION['csrf'], (string)($_POST['csrf'] ?? ''))) { failPage(403); }
 $action = (string)($_POST['action'] ?? '');
 $return = '/?page=cart';
 try {
@@ -11,31 +14,32 @@ try {
             $email = strtolower(trim((string)($_POST['email'] ?? '')));
             $password = (string)($_POST['password'] ?? '');
             if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190 || strlen($password) > 72) throw new RuntimeException('יש להזין כתובת אימייל וסיסמה תקינות.');
+            applicationRate($db, $config, $action, $email);
             if ($action === 'register') {
                 $name = trim((string)($_POST['name'] ?? ''));
-                if ($name === '' || strlen($name) > 180 || strlen($password) < 8) throw new RuntimeException('יש להזין שם וסיסמה באורך 8–72 תווים באנגלית.');
+                if ($name === '' || mb_strlen($name, 'UTF-8') > 60 || mb_strlen($password, 'UTF-8') < 8) throw new RuntimeException('יש להזין שם וסיסמה באורך 8 תווים לפחות ועד 72 בתים.');
                 try { query($db, 'INSERT INTO users (name,email,password_hash) VALUES (?,?,?)', [$name,$email,password_hash($password, PASSWORD_DEFAULT)]); }
                 catch (PDOException $ex) { if ($ex->getCode() === '23000') throw new RuntimeException('כתובת האימייל כבר רשומה.'); throw $ex; }
             }
-            $attempts = (int)($_SESSION['login_attempts'] ?? 0);
-            if ($attempts >= 10 && time() - (int)($_SESSION['last_attempt'] ?? 0) < 300) throw new RuntimeException('יותר מדי ניסיונות. נסו שוב בעוד חמש דקות.');
             $user = query($db, 'SELECT * FROM users WHERE email = ?', [$email])->fetch();
             if (!$user || !password_verify($password, $user['password_hash'])) {
-                $_SESSION['login_attempts'] = $attempts + 1; $_SESSION['last_attempt'] = time();
                 throw new RuntimeException('האימייל או הסיסמה אינם נכונים.');
             }
             session_regenerate_id(true);
+            unset($_SESSION['ai'], $_SESSION['ai_pending'], $_SESSION['checkout_token']);
             $_SESSION['user'] = ['id'=>(int)$user['id'], 'name'=>$user['name']];
             $_SESSION['csrf'] = bin2hex(random_bytes(32)); unset($_SESSION['login_attempts']);
             flash('התחברתם בהצלחה.'); $return = '/?page=catalog'; break;
         case 'logout':
-            unset($_SESSION['user'], $_SESSION['checkout_token']); session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32));
+            unset($_SESSION['user'], $_SESSION['checkout_token'], $_SESSION['ai'], $_SESSION['ai_pending']); session_regenerate_id(true); $_SESSION['csrf'] = bin2hex(random_bytes(32));
             flash('התנתקתם בהצלחה.'); $return = '/'; break;
         case 'add':
         case 'update':
             $id = filter_var($_POST['product_id'] ?? null, FILTER_VALIDATE_INT);
+            if ($action === 'update' && $id && validQuantity($_POST['quantity'] ?? 1) === 0) { unset($_SESSION['cart'][$id], $_SESSION['checkout_token']); flash('סל הקניות עודכן.'); break; }
             $product = $id ? query($db, 'SELECT id,stock FROM products WHERE id=?', [$id])->fetch() : false;
             if (!$product) throw new RuntimeException('המוצר לא נמצא.');
+            if (count($_SESSION['cart']) >= 50 && !isset($_SESSION['cart'][$id])) throw new RuntimeException('הסל מוגבל ל־50 מוצרים שונים.');
             $quantity = validQuantity($_POST['quantity'] ?? 1);
             if ($action === 'add') $quantity += $_SESSION['cart'][$id] ?? 0;
             if ($quantity > 20 || $quantity > (int)$product['stock']) throw new RuntimeException('אין מספיק מלאי או שהכמות עולה על 20.');
@@ -67,10 +71,15 @@ try {
             $return = '/#contact';
             $name = trim((string)($_POST['name'] ?? '')); $email = trim((string)($_POST['email'] ?? '')); $phone = trim((string)($_POST['phone'] ?? ''));
             if (!$name || strlen($name)>180 || !filter_var($email,FILTER_VALIDATE_EMAIL) || strlen($email)>190 || !preg_match('/^[0-9+ ()-]{7,25}$/', $phone)) throw new RuntimeException('יש למלא שם, אימייל ומספר טלפון תקינים.');
+            applicationRate($db, $config, 'contact');
             if (time() - (int)($_SESSION['contact_time'] ?? 0) < 60) throw new RuntimeException('הפרטים כבר נשלחו. נסו שוב בעוד דקה.');
             query($db,'INSERT INTO contact_requests (name,email,phone) VALUES (?,?,?)',[$name,$email,$phone]); $_SESSION['contact_time']=time(); flash('הפרטים נשמרו בהצלחה.'); break;
         default: http_response_code(400); exit('Unknown action');
     }
+} catch (RateLimitException $ex) {
+    header('Retry-After: ' . $ex->retryAfter);
+    http_response_code(429);
+    exit('יותר מדי ניסיונות. המתינו כמה דקות ונסו שוב.');
 } catch (RuntimeException $ex) {
     if ($db->inTransaction()) $db->rollBack();
     if ($ex instanceof PDOException) { error_log('iStore database action failed: '.$ex->getCode()); flash('אירעה תקלה. נסו שוב מאוחר יותר.'); }

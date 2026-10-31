@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+**/config/*.php
+!**/config/*.example.php
+*.log
+*.zip
+htdocs
+build
+tests
