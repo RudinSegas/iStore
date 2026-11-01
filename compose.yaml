@@ -14,6 +14,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
       AI_RATE_SECRET: ${AI_RATE_SECRET:-}
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-1}
     depends_on:
       db:
         condition: service_healthy
