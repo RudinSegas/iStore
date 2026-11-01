@@ -1,38 +1,47 @@
-# iStore — PHP E-Commerce Portfolio with Gemini AI
+# iStore — Full-Stack E-Commerce Platform with Gemini AI
 
-A responsive, Hebrew-first (RTL) e-commerce **portfolio demo** built with PHP, MySQL, HTML, CSS and vanilla JavaScript. Its Gemini-powered shopping assistant can answer general technology questions and help shoppers compare products using information retrieved from the store's database.
+A responsive, Hebrew-first (RTL) e-commerce **portfolio application** developed using PHP 8, MySQL, HTML, CSS, and vanilla JavaScript.
 
-**Repository:** https://github.com/RudinSegas/iStore  
-**Current source revision documented:** `8db5436` (Gemini AI assistant and platform improvements).
+Features a Google Gemini-powered conversational shopping assistant that answers technology questions, provides contextual product recommendations, and compares products using real information retrieved from the store's database.
 
-> **Demo only:** No real payment processing, card collection, or order fulfillment. Use fictitious customer details and unique demo passwords.
+**Live Demo:** [roden-istore.duckdns.org](https://roden-istore.duckdns.org)  
+**GitHub Repository:** [RudinSegas/iStore](https://github.com/RudinSegas/iStore)  
+**Developer:** [Rudin Segas](https://github.com/RudinSegas)
+
+> **Portfolio Demo:** This project is intended for educational and portfolio purposes. It does not process real payments, collect payment card information, or fulfill orders. Please use fictitious customer details and unique demo passwords.
 
 ## Features
 
-- Responsive Hebrew RTL storefront with product search, categories, filtering, sorting and pagination.
-- User registration and sign-in, session management, CSRF protection and rate limits.
-- Guest cart, stock validation, transactional demo checkout, order token protection and private order history.
-- Gemini conversational assistant for technology explanations and contextual product recommendations.
-- Database-backed product candidates; PHP controls catalog facts, prices, availability and product links. Gemini does not execute SQL or place orders.
-- Bounded chat history, reset/retry experience, and graceful handling of AI outages or quotas.
-- Docker Compose development setup using PHP 8.3 + Apache and MySQL 8.4.
+- Responsive Hebrew RTL storefront with product search, categories, filtering, sorting, and pagination.
+- User registration, authentication, session management, CSRF protection, and rate limiting.
+- Guest shopping cart, stock validation, transactional demo checkout, and private order history.
+- Google Gemini conversational AI assistant for technology explanations, product recommendations, and comparisons.
+- Database-backed product retrieval, with server-side control over product details, pricing, availability, and links.
+- Bounded conversation history, chat reset/retry functionality, and graceful handling of AI API errors and quota limits.
+- Dockerized PHP/Apache and MySQL services with persistent database storage.
+- Live cloud deployment with Nginx reverse proxy, HTTPS, and secure session cookies.
 
-## Technology
+## Technology Stack
 
 | Layer | Technology |
-| --- | --- |
-| Backend | PHP 8.x, PDO prepared statements |
-| Database | MySQL 8.x (MariaDB also supported for manual setup) |
-| Frontend | HTML, CSS, vanilla JavaScript, RTL |
-| AI | Google Gemini API, server-side integration |
-| Local runtime | Docker Compose, Apache |
-| Cloud deployment target | Google Cloud Compute Engine, Docker Compose, Nginx reverse proxy |
+|---|---|
+| Backend | PHP 8.x, PDO, prepared statements |
+| Database | MySQL 8.4 |
+| Frontend | HTML5, CSS3, vanilla JavaScript, RTL |
+| AI Integration | Google Gemini API, server-side PHP |
+| Containerization | Docker, Docker Compose |
+| Web Server | Apache, Nginx reverse proxy |
+| Cloud Infrastructure | Google Cloud Compute Engine |
+| Security | HTTPS, Let's Encrypt, CSRF protection, secure sessions |
+| Version Control | Git, GitHub |
 
-No React, npm or Composer is required to run the application.
+No React, npm, or Composer is required to run the application.
 
-## Quick start — Docker Compose (recommended)
+## Quick Start — Docker Compose
 
-**Requirements:** Docker Engine or Docker Desktop with the Compose plugin, and Git.
+**Requirements:** Docker Engine or Docker Desktop with Docker Compose, and Git.
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/RudinSegas/iStore.git
@@ -40,121 +49,245 @@ cd iStore
 cp .env.example .env
 ```
 
-On Windows PowerShell, replace `cp` with `Copy-Item .env.example .env`.
+On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
-Edit `.env` locally and set **unique, strong values** for at least:
+### 2. Configure environment variables
+
+Edit `.env` and configure strong, unique values for:
 
 - `DB_PASSWORD`
 - `DB_ROOT_PASSWORD`
 - `APP_SECRET`
 
-Optional Gemini settings:
+Optional Gemini AI configuration:
 
-- `AI_ENABLED=1`
-- `GEMINI_API_KEY=<your private API key>`
-- `AI_RATE_SECRET=<long random secret>`
-- `GEMINI_MODEL=<model available to your Google AI account>`
+```dotenv
+AI_ENABLED=1
+GEMINI_API_KEY=<your-private-api-key>
+AI_RATE_SECRET=<long-random-secret>
+GEMINI_MODEL=<supported-gemini-model>
+```
 
-Generate a random 64-character hexadecimal secret with PHP if installed:
+For local development over HTTP:
+
+```dotenv
+SESSION_SECURE_COOKIE=0
+```
+
+For production deployment over HTTPS:
+
+```dotenv
+SESSION_SECURE_COOKIE=1
+```
+
+Generate a random secret using PHP:
 
 ```bash
 php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
 ```
 
-Then start the containers:
+Never commit `.env` or any private credentials to Git.
+
+### 3. Start the application
 
 ```bash
 docker compose up --build -d
 docker compose ps
 ```
 
-Open **http://127.0.0.1:8080** (or the port configured through `APP_PORT`). The web container binds to localhost by default.
+Open:
 
-Stop without deleting data:
+**http://127.0.0.1:8080**
+
+The application binds to localhost by default. The port can be configured using `APP_PORT`.
+
+### 4. Stop the application
 
 ```bash
 docker compose down
 ```
 
-**Important:** `docker compose down -v` deletes the database volume. The SQL initialization scripts run automatically **only when the database volume is first created**. Do not re-seed a database containing real or existing demo data.
+**Important:** Running `docker compose down -v` removes the database volume and its stored data. Database initialization scripts execute automatically only when the database volume is first created.
 
-## Running without Docker
+## Running Without Docker
 
-1. Install PHP 8.2+ with `pdo_mysql`, `curl`, `mbstring`, sessions and valid HTTPS CA certificates, plus MySQL 8 / MariaDB 10.6+.
-2. Create an empty `istore` database and a least-privileged application database user.
-3. Import these files **in order** into the empty database:
+The application also supports manual PHP and MySQL installation.
+
+1. Install PHP 8.2+ with `pdo_mysql`, `curl`, `mbstring`, sessions, and valid HTTPS CA certificates, alongside MySQL 8 or MariaDB 10.6+.
+2. Create an empty `istore` database and a least-privileged database user.
+3. Import the SQL files in order:
    - `database/schema.sql`
    - `database/seed.sql`
    - `database/upgrade_ai_assistant.sql`
    - `database/upgrade_v1.sql`
-4. Run `php scripts/setup.php` to create private configuration files; edit `config/config.php` for your local database and `config/ai.php` if using Gemini.
-5. Run `php -S 127.0.0.1:8080 -t public` and open http://127.0.0.1:8080.
+4. Run `php scripts/setup.php` and configure the private files `config/config.php` and, when applicable, `config/ai.php`.
+5. Start the development server:
 
-The built-in PHP server is **for local development only**. Always serve `public/` as the document root, never the repository root. Native PHP does not automatically load `.env`; use the private PHP configuration or exported environment variables for this mode.
-
-## Gemini AI assistant
-
-The assistant sends user requests to the Gemini API **from PHP on the server**, not from browser JavaScript. The server retrieves and filters relevant product candidates and resolves catalog facts, while Gemini generates conversational explanations and comparisons. General technology questions can be answered without inventing store inventory.
-
-The storefront works with AI disabled. To enable it in Docker, set the relevant environment variables in your private `.env` file and restart the web container. For manual PHP hosting, configure private `config/ai.php` instead.
-
-Keep `GEMINI_API_KEY`, database credentials, `APP_SECRET`, and `AI_RATE_SECRET` **out of Git and browser-accessible files**. Rotate any previously exposed API key. The application has its own rate limits, which do not guarantee Google API availability or a free billing tier.
-
-See [AI architecture](docs/AI_ASSISTANT.md) for the design and limitations.
-
-## Deployment — Google Cloud Compute Engine
-
-The intended deployment is a **single VM** running:
-
-```text
-Browser (HTTPS)
-      |
-  Nginx on VM
-      |
-127.0.0.1:8080
-      |
-Apache + PHP container
-      |
- MySQL container (private Docker network)
+```bash
+php -S 127.0.0.1:8080 -t public
 ```
 
-High-level deployment checklist:
+The built-in PHP server is intended for local development only.
 
-1. Provision a Linux VM with Docker Engine, Docker Compose, Nginx and suitable RAM/storage.
-2. Clone this repository on the VM.
-3. Create a **new, private** `.env` file on the VM using `.env.example` as a starting point. Never commit or share its values.
-4. Run `docker compose up --build -d` and inspect container health and logs.
-5. Configure Nginx to reverse-proxy to `http://127.0.0.1:8080`, restrict access to diagnostics, and add HTTPS/TLS for a real hostname.
-6. Test login, catalog, checkout, Gemini behavior, error handling and database persistence before announcing the deployment as live.
+Always configure `public/` as the web document root, not the repository root.
 
-**Status:** The updated source has been pushed to GitHub. The Google Cloud deployment and public HTTPS verification are **not yet completed**. This section describes the target setup, not a tested production installation.
+Native PHP does not automatically load `.env`; configure private PHP settings or exported environment variables when running without Docker.
 
-Do not publish MySQL's port, `.env`, private config, test tokens, or debug endpoints. Source files such as `gemini-test.php` and `public/api/gemini-check.php` may remain in Git for portfolio purposes, but production access must be blocked or the probes kept disabled and strongly authenticated. Do not run the root-level test script as a public web endpoint.
+## Gemini AI Shopping Assistant
 
-## Security and testing
+iStore integrates the Google Gemini API through a server-side PHP implementation.
 
-- PDO prepared statements, output escaping, CSRF protections and session controls are part of the application design.
-- Diagnostics and test source can be reviewed in the repository; they are **not** public production APIs.
-- See [security audit](docs/SECURITY_AUDIT.md), [test report](docs/TEST_REPORT.md) and [test instructions](tests/README.md).
-- Documentation and static review are not substitutes for testing the actual deployed system.
+The assistant supports:
 
-## Project structure
+- Natural-language conversations about computers and technology.
+- Explanations of RAM, SSDs, processors, GPUs, Docker, and development workloads.
+- Product recommendations based on user requirements and budgets.
+- Contextual product comparisons using actual catalog data.
+- Follow-up questions and conversation context.
+
+### Architecture
+
+The application retrieves relevant products from MySQL using server-side PHP logic.
+
+Gemini generates conversational explanations and recommendations based on the supplied context, while PHP remains responsible for authoritative catalog information, including prices, stock availability, and product links.
+
+The AI model does not directly execute SQL queries, modify inventory, or place orders.
+
+API credentials remain on the server and are never intentionally exposed to browser-side JavaScript.
+
+The storefront continues to operate when the AI service is disabled or temporarily unavailable.
+
+**Live verification:** The deployed assistant has been manually tested with a budget-based laptop recommendation request, returning contextual explanations and comparisons of products from the store catalog.
+
+AI availability and usage limits depend on the Google API account and applicable quotas.
+
+See [AI Architecture](docs/AI_ASSISTANT.md) for additional implementation details.
+
+## Cloud Deployment — Google Cloud
+
+iStore is deployed on **Google Cloud Compute Engine**, using a Linux virtual machine running Docker Compose and Nginx.
+
+**Live Application:** https://roden-istore.duckdns.org
+
+### Deployment Architecture
 
 ```text
-app/          Application logic and Gemini integration
-public/       Public web document root, assets and API routes
-config/       Private runtime configuration and example templates
-database/     Schema, seed and incremental SQL upgrades
-docs/         Architecture, security and testing documentation
-scripts/      Setup, audit and packaging helpers
-tests/        Test assets and instructions
-Dockerfile    PHP/Apache container image
-compose.yaml  PHP + MySQL development services
-.env.example  Environment variable template (no live secrets)
+             User / Browser
+                   |
+                HTTPS
+                   |
+        Google Cloud Compute Engine
+                   |
+           Nginx Reverse Proxy
+                   |
+            127.0.0.1:8080
+                   |
+          Docker Compose Network
+                   |
+          +--------+--------+
+          |                 |
+      PHP 8.3            MySQL 8.4
+      Apache             Database
+      Container          Container
+          |
+     Gemini API
+     (External HTTPS)
 ```
 
-Older InfinityFree notes may remain under `docs/` for historical reference. The former generated `build/` deployment directory is not part of the current source checkout and should not be treated as an active deployment.
+### Infrastructure Configuration
 
-## License and scope
+- Google Cloud Compute Engine virtual machine.
+- Docker Compose orchestration for PHP/Apache and MySQL containers.
+- Persistent MySQL database storage.
+- Nginx reverse proxy forwarding requests to the locally bound application.
+- DuckDNS hostname with a static public IPv4 address.
+- Let's Encrypt TLS certificate managed through Certbot.
+- Automatic HTTP-to-HTTPS redirection.
+- Secure, HttpOnly, SameSite session cookies.
+- Private environment configuration excluded from Git.
+- GitHub repository for source control and version history.
 
-This repository is a learning and portfolio project. No license grant is implied unless a license file is included in the repository. Do not use it as a payment-processing or production commerce system without further security, operations and legal review.
+### Deployment Status
+
+**Live — Successfully deployed and manually verified.**
+
+The application is publicly accessible through HTTPS.
+
+Manual verification has covered:
+
+- Storefront navigation and product browsing.
+- User registration and authentication.
+- Shopping cart and demo checkout.
+- Order creation through the application.
+- Gemini AI product recommendations.
+- HTTPS connectivity and HTTP-to-HTTPS redirection.
+- Secure session cookie configuration.
+- Docker container availability and MySQL health.
+
+The deployment uses a single virtual machine and is intended as a functional portfolio demonstration, not a high-availability commercial e-commerce platform.
+
+Automated CI/CD, production monitoring, tested backup recovery, and comprehensive security testing are not claimed as completed.
+
+## Security
+
+The application incorporates several security measures:
+
+- PDO prepared statements for database operations.
+- Output escaping to reduce cross-site scripting risks.
+- CSRF protection for sensitive application actions.
+- Session management with secure cookie settings.
+- Rate limiting for supported application endpoints.
+- Server-side handling of Gemini API credentials.
+- Private environment configuration excluded from version control.
+- HTTPS encryption through Let's Encrypt.
+- Automatic HTTP-to-HTTPS redirection.
+- MySQL networking isolated from direct public exposure in the deployed Docker configuration.
+
+**Security considerations:** Diagnostic endpoints, test scripts, credentials, and private configuration must not be publicly accessible. Production access to diagnostic endpoints should be blocked or protected by strong authentication.
+
+The project has not undergone an independent security audit or penetration test.
+
+See the project documentation:
+
+- [Security Audit](docs/SECURITY_AUDIT.md)
+- [Test Report](docs/TEST_REPORT.md)
+- [Testing Instructions](tests/README.md)
+
+## Project Structure
+
+```text
+iStore/
+├── app/             Application logic and Gemini integration
+├── public/          Storefront, assets, and API routes
+├── config/          Private configuration and templates
+├── database/        Database schema, seed, and upgrades
+├── docs/            Architecture, security, and test documentation
+├── scripts/         Setup and maintenance utilities
+├── tests/           Test assets and instructions
+├── Dockerfile       PHP/Apache container configuration
+├── compose.yaml     Docker Compose services
+├── .env.example     Environment configuration template
+└── README.md        Project documentation
+```
+
+Historical InfinityFree deployment notes may remain in `docs/`. The active public demonstration is hosted on Google Cloud.
+
+## Author & Acknowledgments
+
+**Developed by Rudin Segas**
+
+Computer Engineering graduate with interests in software development, backend systems, cloud infrastructure, and AI integration.
+
+**GitHub:** [github.com/RudinSegas](https://github.com/RudinSegas)
+
+This project was built using PHP, MySQL, JavaScript, Docker, Apache, Nginx, Google Cloud, Let's Encrypt, and the Google Gemini API.
+
+Product names, brand names, and trademarks are the property of their respective owners. Third-party technologies and assets remain subject to their applicable licenses and terms.
+
+## License & Project Scope
+
+Copyright © 2026 Rudin Segas. All rights reserved for original project contributions.
+
+This repository is a personal educational and portfolio project. No general license to reuse, modify, or redistribute the original project code is granted unless explicitly provided.
+
+The application is not intended for real payment processing or commercial order fulfillment without additional security, operational, and legal review.
