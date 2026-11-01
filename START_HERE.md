@@ -1,12 +1,24 @@
-# iStore — Start Here / התחלה מהירה
+# iStore — Quick Start Guide
 
-iStore הוא פרויקט תיק עבודות של חנות מקוונת בעברית (RTL), המבוסס על PHP, ‏MySQL ו־JavaScript, עם עוזר קניות מבוסס Gemini AI.
+**Full-Stack E-Commerce Platform with Google Gemini AI**
 
-**GitHub:** https://github.com/RudinSegas/iStore
+iStore is a responsive, Hebrew-first (RTL) e-commerce portfolio application built with PHP 8, MySQL, HTML, CSS, and vanilla JavaScript.
 
-## הפעלה מקומית באמצעות Docker (מומלץ)
+The application includes user authentication, product browsing, shopping carts, demo checkout, and a conversational AI shopping assistant powered by Google Gemini.
 
-דרישות: Git ו־Docker עם Docker Compose.
+**Live Demo:** [roden-istore.duckdns.org](https://roden-istore.duckdns.org)  
+**GitHub:** [RudinSegas/iStore](https://github.com/RudinSegas/iStore)  
+**Developer:** [Rudin Segas](https://github.com/RudinSegas)
+
+## 1. Requirements
+
+- Git
+- Docker Engine or Docker Desktop
+- Docker Compose
+
+No React, npm, or Composer installation is required.
+
+## 2. Clone the Repository
 
 ```bash
 git clone https://github.com/RudinSegas/iStore.git
@@ -14,54 +26,109 @@ cd iStore
 cp .env.example .env
 ```
 
-ב־Windows PowerShell ניתן להשתמש בפקודה:
+On Windows PowerShell, use:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-פתחו את `.env` והגדירו סיסמאות חזקות וייחודיות עבור `DB_PASSWORD`, ‏`DB_ROOT_PASSWORD` וסוד עבור `APP_SECRET`.
+## 3. Configure Environment Variables
 
-להפעלת Gemini, הגדירו גם `AI_ENABLED=1`, ‏`GEMINI_API_KEY` ו־`AI_RATE_SECRET`. אפשר להשאיר את Gemini כבוי; החנות עצמה עדיין פועלת. ודאו ששם המודל מתאים לחשבון ה־Gemini שלכם.
+Open `.env` and configure unique, strong values for:
 
-הריצו:
+- `DB_PASSWORD`
+- `DB_ROOT_PASSWORD`
+- `APP_SECRET`
+
+To enable the Gemini AI assistant, configure:
+
+```dotenv
+AI_ENABLED=1
+GEMINI_API_KEY=<your-private-api-key>
+AI_RATE_SECRET=<long-random-secret>
+GEMINI_MODEL=<supported-gemini-model>
+```
+
+Use a Gemini model available to your Google API account.
+
+For local development over HTTP:
+
+```dotenv
+SESSION_SECURE_COOKIE=0
+```
+
+For HTTPS deployment:
+
+```dotenv
+SESSION_SECURE_COOKIE=1
+```
+
+The storefront also works with `AI_ENABLED=0`.
+
+**Security:** Never commit `.env`, database passwords, API keys, or other private credentials to GitHub.
+
+## 4. Start the Application
 
 ```bash
 docker compose up --build -d
 docker compose ps
 ```
 
-פתחו בדפדפן: **http://127.0.0.1:8080**
+Open the local application:
 
-לעצירה ללא מחיקת נתוני המסד:
+**http://127.0.0.1:8080**
+
+Docker Compose starts the PHP/Apache and MySQL services. The database is initialized automatically when its data volume is first created.
+
+## 5. Stop the Application
 
 ```bash
 docker compose down
 ```
 
-**שימו לב:** אין להריץ `docker compose down -v` אלא אם רוצים למחוק במכוון את נתוני מסד הנתונים. קובצי ה־SQL ליצירת המסד נטענים אוטומטית רק כאשר נפח הנתונים חדש.
+This stops the containers without deleting persistent database data.
 
-## הפעלה ללא Docker
+**Warning:** `docker compose down -v` also removes the database volume and its stored data.
 
-1. התקינו PHP 8.2 ומעלה עם `pdo_mysql`, ‏`curl`, ‏`mbstring` ושרת MySQL/MariaDB.
-2. צרו מסד ריק וייבאו לפי הסדר את `database/schema.sql`, ‏`database/seed.sql`, ‏`database/upgrade_ai_assistant.sql`, ‏`database/upgrade_v1.sql`.
-3. הריצו `php scripts/setup.php` והגדירו את מסד הנתונים בקובץ הפרטי `config/config.php`.
-4. להפעלת Gemini, הגדירו את המפתח בקובץ הפרטי `config/ai.php`.
-5. הריצו `php -S 127.0.0.1:8080 -t public`.
+## 6. Live Cloud Deployment
 
-אין להשתמש בשרת הפיתוח המובנה של PHP כשרת אינטרנט ציבורי.
+**Status: Live and manually verified**
 
-## Google Cloud — מצב הפריסה
+The application is deployed on Google Cloud Compute Engine.
 
-הקוד המעודכן כבר הועלה ל־GitHub. הפריסה ל־Google Cloud Compute Engine נמצאת בהכנה וטרם אומתה כאתר חי. היעד הוא Nginx כ־reverse proxy, לצד קונטיינרים של PHP/Apache ו־MySQL באמצעות Docker Compose.
+**Live URL:** https://roden-istore.duckdns.org
 
-בשרת יש ליצור `.env` פרטי חדש, להפעיל את הקונטיינרים, להגדיר HTTPS ולבדוק את האתר לפני פרסום כתובת ציבורית.
+### Infrastructure
 
-## חשוב לדעת
+- **Google Cloud Compute Engine** — Linux virtual machine
+- **Docker Compose** — PHP/Apache and MySQL containers
+- **Nginx** — Reverse proxy
+- **Let's Encrypt** — HTTPS/TLS certificate
+- **DuckDNS** — Public hostname
+- **Google Gemini API** — Server-side AI integration
+- **GitHub** — Source control
 
-- זו **חנות הדגמה**: אין סליקה אמיתית ואין להזין פרטי אשראי או מידע אישי אמיתי.
-- לעולם אין להעלות `.env`, סיסמאות, מפתחות Gemini או קובצי הגדרות פרטיים ל־GitHub.
-- קובצי בדיקה עשויים להופיע בקוד המקור לצורכי תיק עבודות, אך אין לחשוף נקודות אבחון בשרת ציבורי.
-- תיקיות `app/` ו־`public/` הן מקור הקוד הפעיל; אין להסתמך על תיקיית `build/infinityfree/htdocs/` הישנה.
+The deployment uses HTTPS, automatic HTTP-to-HTTPS redirection, and secure session cookies.
 
-לפרטים מלאים: [README.md](README.md). לתכנון העוזר: [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md). לבדיקות: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
+Storefront navigation, authentication, shopping cart, demo checkout, and Gemini product recommendations have been manually tested.
+
+This is a portfolio deployment, not a production-ready commercial payment platform.
+
+## 7. Additional Documentation
+
+For architecture, manual installation, security details, and testing instructions, see:
+
+- [README — Full Project Documentation](README.md)
+- [Gemini AI Architecture](docs/AI_ASSISTANT.md)
+- [Security Audit](docs/SECURITY_AUDIT.md)
+- [Test Report](docs/TEST_REPORT.md)
+- [Testing Instructions](tests/README.md)
+
+## Author
+
+**Developed by Rudin Segas**  
+[GitHub Profile](https://github.com/RudinSegas)
+
+Copyright © 2026 Rudin Segas. All rights reserved for original project contributions.
+
+> **Portfolio Demo:** No real payment processing or order fulfillment. Use fictitious customer details and unique demo passwords.
